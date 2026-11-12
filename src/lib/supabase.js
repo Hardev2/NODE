@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Vite inlines these at build time. A host that never received the variables,
+// such as the first Vercel deploy, still gets the public project values.
+const url = import.meta.env.VITE_SUPABASE_URL || 'https://zfpwcbjxghysmkokjvad.supabase.co'
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ZTdADomzHT1NjmpTBRVKsg_qL2bR_CX'
 const REMEMBER_KEY = 'northline-remember'
 
 export const isSupabaseConfigured = Boolean(url && anonKey)
