@@ -20,11 +20,11 @@ function FolderMark() {
 }
 
 const ACTION_TONES = {
-  file: 'bg-[#e0f2fe] text-[#0369A1] hover:bg-[#bae6fd]',
-  folder: 'bg-[#fef3c7] text-[#b45309] hover:bg-[#fde68a]',
-  rename: 'bg-[#f1f5f9] text-[#334155] hover:bg-[#e2e8f0]',
-  delete: 'bg-[#ffe4e6] text-[#9f1239] hover:bg-[#fecdd3]',
-  save: 'bg-[#dcfce7] text-[#166534] hover:bg-[#bbf7d0]',
+  file: 'tone-info',
+  folder: 'tone-warn',
+  rename: 'tone-neutral',
+  delete: 'tone-danger',
+  save: 'tone-ok',
 }
 
 function ActionIcon({ name }) {
@@ -243,7 +243,7 @@ export default function FolderPane({
               onOpenFile(file)
             }
           }}
-          className={`min-w-0 flex-1 cursor-grab truncate py-1.5 text-left font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta active:cursor-grabbing ${active ? 'bg-navy text-white' : 'text-slate-ink hover:bg-paper hover:text-ink'}`}
+          className={`min-w-0 flex-1 cursor-grab truncate py-1.5 text-left font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta active:cursor-grabbing ${active ? 'bg-[var(--button,#0f172a)] text-[var(--button-ink,#ffffff)]' : 'text-slate-ink hover:bg-paper hover:text-ink'}`}
         >
           {file.name}
         </div>
@@ -286,7 +286,7 @@ export default function FolderPane({
           event.stopPropagation()
           placeDropped(event, folder.id)
         }}
-        className={targeted ? 'rounded bg-[#e0f2fe]' : ''}
+        className={targeted ? 'rounded tone-drop' : ''}
       >
         <div className={`flex items-center gap-0.5 rounded-md pr-0.5 ${isSelected && !targeted ? 'bg-paper' : ''}`} style={{ paddingLeft: `${depth * 12 + 2}px` }}>
           {renamingId === folder.id ? (
@@ -305,9 +305,9 @@ export default function FolderPane({
                 onKeyDown={(event) => {
                   if (event.key === 'Escape') setRenamingId(null)
                 }}
-                className="min-w-0 flex-1 rounded-md border border-line bg-white px-2 py-1 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                className="min-w-0 flex-1 rounded-md border border-line bg-[var(--card,#ffffff)] px-2 py-1 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
               />
-              <button type="submit" className="cursor-pointer rounded-md bg-navy px-2 py-1 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+              <button type="submit" className="desk-button cursor-pointer rounded-md px-2 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                 Save
               </button>
             </form>
@@ -370,9 +370,9 @@ export default function FolderPane({
                   aria-label={`New folder inside ${folder.name}`}
                   placeholder="Folder name"
                   onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-                  className="min-w-0 flex-1 rounded-md border border-line bg-white px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                  className="min-w-0 flex-1 rounded-md border border-line bg-[var(--card,#ffffff)] px-2 py-1 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
                 />
-                <button type="submit" className="cursor-pointer rounded-md bg-navy px-2 py-1 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+                <button type="submit" className="desk-button cursor-pointer rounded-md px-2 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                   Add
                 </button>
               </form>
@@ -393,7 +393,7 @@ export default function FolderPane({
   const outsideHot = dropTarget === 'outside'
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white lg:h-dvh lg:max-h-dvh lg:min-h-0">
+    <div className="flex min-h-dvh flex-col bg-[var(--pane,#ffffff)] lg:h-dvh lg:max-h-dvh lg:min-h-0">
       <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5">
         <h2 className="font-display text-sm font-semibold">Folders</h2>
         <FolderAction tone="folder" label="New folder" onClick={() => startCreate(null)} />
@@ -413,9 +413,9 @@ export default function FolderPane({
             aria-label="New folder"
             placeholder="Folder name"
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-            className="min-w-0 flex-1 rounded-md border border-line px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+            className="min-w-0 flex-1 rounded-md border border-line bg-[var(--card,#ffffff)] px-2 py-1 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
           />
-          <button type="submit" className="cursor-pointer rounded-md bg-navy px-2 py-1 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+          <button type="submit" className="desk-button cursor-pointer rounded-md px-2 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
             Add
           </button>
         </form>
@@ -424,7 +424,7 @@ export default function FolderPane({
       {notice ? <p className="border-b border-line px-3 py-2 text-xs leading-relaxed text-slate-ink" role="status">{notice}</p> : null}
 
       <div
-        className={`mx-2 mt-2 rounded-lg border border-dashed px-2.5 py-2 transition-colors duration-200 ${outsideHot ? 'border-cta bg-[#e0f2fe]' : 'border-line'}`}
+        className={`mx-2 mt-2 rounded-lg border border-dashed px-2.5 py-2 transition-colors duration-200 ${outsideHot ? 'border-cta tone-drop' : 'border-line'}`}
         onDragOver={(event) => {
           if (!allowDrop(event, dragIdRef.current)) return
           setDropTarget('outside')

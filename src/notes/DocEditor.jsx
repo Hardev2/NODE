@@ -4,8 +4,10 @@ import { TextAlign } from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { NoteCodeBlock, applyCodeBlock } from './noteCode'
 
 const COLORS = [
+  { name: 'Bone', value: '#f4efe9' },
   { name: 'Ink', value: '#020617' },
   { name: 'Blue', value: '#0369A1' },
   { name: 'Green', value: '#166534' },
@@ -21,7 +23,7 @@ function ToolButton({ active, label, onClick, children }) {
       aria-label={label}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className={`cursor-pointer rounded-md px-1.5 py-0.5 text-xs font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${active ? 'bg-navy text-white' : 'text-slate-ink hover:bg-paper hover:text-ink'}`}
+      className={`cursor-pointer rounded-md px-1.5 py-0.5 text-xs font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${active ? 'bg-[var(--button,#0f172a)] text-[var(--button-ink,#ffffff)]' : 'text-slate-ink hover:bg-paper hover:text-ink'}`}
     >
       {children}
     </button>
@@ -70,7 +72,8 @@ export default function DocEditor({ initialHtml, onChange, label = 'Note', autoF
     immediatelyRender: true,
     autofocus: autoFocus ? 'end' : false,
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] }, codeBlock: false }),
+      NoteCodeBlock,
       TextStyle,
       Color,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -91,7 +94,7 @@ export default function DocEditor({ initialHtml, onChange, label = 'Note', autoF
   const currentColor = editor.getAttributes('textStyle').color
 
   return (
-    <div className="group bg-white">
+    <div className="group bg-transparent">
       <div className="note-tools flex-wrap items-center gap-0.5 border-b border-line px-3 py-1.5" role="toolbar" aria-label="Note formatting">
         {[1, 2, 3].map((level) => (
           <ToolButton
@@ -109,6 +112,9 @@ export default function DocEditor({ initialHtml, onChange, label = 'Note', autoF
         </ToolButton>
         <ToolButton label="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
           <span className="italic">I</span>
+        </ToolButton>
+        <ToolButton label="Code block" active={editor.isActive('codeBlock')} onClick={() => applyCodeBlock(editor)}>
+          <span className="font-mono text-[11px] leading-none">{'</>'}</span>
         </ToolButton>
         <ToolButton label="Bulleted list" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
           <ListIcon />
@@ -128,7 +134,7 @@ export default function DocEditor({ initialHtml, onChange, label = 'Note', autoF
               if (currentColor === color.value) editor.chain().focus().unsetColor().run()
               else editor.chain().focus().setColor(color.value).run()
             }}
-            className={`size-4 cursor-pointer rounded-full ring-offset-2 transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${currentColor === color.value ? 'ring-2 ring-navy' : ''}`}
+            className={`size-4 cursor-pointer rounded-full border border-[var(--line,#e2e8f0)] ring-offset-2 ring-offset-[var(--card,#ffffff)] transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${currentColor === color.value ? 'ring-2 ring-[var(--button,#0f172a)]' : ''}`}
             style={{ backgroundColor: color.value }}
           />
         ))}

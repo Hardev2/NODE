@@ -23,6 +23,7 @@ import {
   sqlEditorUrl,
 } from '../lib/notes'
 import { downloadTextFile, writeTextToFolder } from '../lib/localFile'
+import { readTheme, writeTheme } from '../lib/theme'
 import DocEditor from './DocEditor'
 import FolderPane from './FolderPane'
 import NoteEditor from './NoteEditor'
@@ -67,11 +68,11 @@ function StackMap({ pages, activeId, stackNeedle, onJump, layout = 'rail' }) {
             onClick={() => onJump(page.id)}
             aria-current={active ? 'true' : undefined}
             aria-label={`Show note ${index + 1}`}
-            className={`${rail ? 'w-full' : 'w-16 shrink-0'} cursor-pointer overflow-hidden rounded-md border bg-white px-1.5 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${active ? 'border-navy shadow-[0_0_0_1px_#0f172a]' : hit ? 'border-cta' : 'border-line'}`}
+            className={`${rail ? 'w-full' : 'w-16 shrink-0'} cursor-pointer overflow-hidden rounded-md border bg-[var(--card,#ffffff)] px-1.5 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${active ? 'border-[var(--button,#0f172a)] ring-1 ring-[var(--button,#0f172a)]' : hit ? 'border-cta' : 'border-line'}`}
           >
-            <span className={`block text-[10px] font-semibold ${active ? 'text-navy' : 'text-slate-ink'}`}>{index + 1}</span>
+            <span className={`block text-[10px] font-semibold ${active ? 'text-[var(--button,#0f172a)]' : 'text-slate-ink'}`}>{index + 1}</span>
             <span
-              className="mt-0.5 block overflow-hidden text-[9px] leading-[1.15] text-[#475569]"
+              className="mt-0.5 block overflow-hidden text-[9px] leading-[1.15] text-slate-ink"
               style={{ display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical' }}
             >
               {text || 'Empty'}
@@ -80,6 +81,24 @@ function StackMap({ pages, activeId, stackNeedle, onJump, layout = 'rail' }) {
         )
       })}
     </nav>
+  )
+}
+
+function ThemeSwitch({ theme, onToggle, tone = 'canvas' }) {
+  const dark = theme === 'dark'
+  const toneClass = tone === 'side'
+    ? 'text-white/75 hover:bg-white/10 hover:text-white'
+    : 'text-[var(--button,#0f172a)] hover:bg-[var(--soft,#f1f5f9)]'
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={dark}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`cursor-pointer rounded-md px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.16em] uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${toneClass}`}
+    >
+      {dark ? 'Light' : 'Dark'}
+    </button>
   )
 }
 
@@ -140,8 +159,29 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
   const [saveState, setSaveState] = useState('saved')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [working, setWorking] = useState(false)
+  const [theme, setTheme] = useState(readTheme)
 
   draftRef.current = { selectedId, title, body: serializeNotePages(pages), activeFileId, fileText }
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.dataset.theme = theme
+    root.style.colorScheme = theme
+    root.style.backgroundColor = theme === 'dark' ? '#0B0909' : ''
+    return () => {
+      delete root.dataset.theme
+      root.style.removeProperty('color-scheme')
+      root.style.removeProperty('background-color')
+    }
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme((current) => {
+      const next = current === 'dark' ? 'light' : 'dark'
+      writeTheme(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     document.title = 'NODE — Notes'
@@ -631,17 +671,18 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
     : notes
 
   return (
-    <div className="min-h-dvh bg-[#e8eef3] text-ink lg:grid lg:grid-cols-[11.5rem_minmax(0,1fr)_15.5rem]">
-      <aside className={`${showList ? 'flex' : 'hidden'} min-h-dvh flex-col bg-navy text-paper lg:sticky lg:top-0 lg:z-20 lg:flex lg:h-dvh lg:max-h-dvh lg:self-start lg:overflow-hidden`}>
-        <div className="flex items-center justify-between px-3 pt-4">
+    <div data-theme={theme} className="desk min-h-dvh bg-[var(--canvas,#e8eef3)] text-ink lg:grid lg:grid-cols-[11.5rem_minmax(0,1fr)_15.5rem]">
+      <aside className={`${showList ? 'flex' : 'hidden'} min-h-dvh flex-col border-white/10 bg-[var(--side,#0f172a)] text-[var(--side-ink,#f8fafc)] lg:sticky lg:top-0 lg:z-20 lg:flex lg:h-dvh lg:max-h-dvh lg:self-start lg:overflow-hidden lg:border-r`}>
+        <div className="flex items-center justify-between gap-2 px-3 pt-4">
           <p className="font-display text-xs font-semibold tracking-[0.22em] uppercase">NODE</p>
+          <ThemeSwitch theme={theme} onToggle={toggleTheme} tone="side" />
         </div>
         <div className="px-3 py-3">
           <button
             type="button"
             onClick={addNote}
             disabled={working || setupNeeded}
-            className="w-full cursor-pointer rounded-md bg-white px-2.5 py-1.5 text-left text-sm font-semibold text-navy transition-colors duration-200 hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-wait disabled:opacity-70"
+            className="side-button w-full cursor-pointer rounded-md px-2.5 py-1.5 text-left text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-wait disabled:opacity-70"
           >
             New note
           </button>
@@ -653,7 +694,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search notes"
-              className="w-full rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-sm text-white placeholder:text-paper/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+              className="w-full rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
             />
           </label>
         </div>
@@ -674,30 +715,30 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                 >
                   <span className="block truncate text-sm font-medium">{displayTitle(note.title)}</span>
                   {needle ? (
-                    <span className="mt-0.5 block text-[11px] leading-4 text-paper/70">{excerpt || 'Title match'}</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-white/70">{excerpt || 'Title match'}</span>
                   ) : (
-                    <span className="block text-[11px] leading-4 text-paper/60">{formatWhen(note.updated_at)}</span>
+                    <span className="block text-[11px] leading-4 text-white/60">{formatWhen(note.updated_at)}</span>
                   )}
                 </button>
               </li>
             )
           })}
           {!loading && notes.length === 0 && !setupNeeded ? (
-            <li className="px-3 py-6 text-sm text-paper/70">No notes yet.</li>
+            <li className="px-3 py-6 text-sm text-white/70">No notes yet.</li>
           ) : null}
           {!loading && notes.length > 0 && visibleNotes.length === 0 ? (
-            <li className="px-3 py-6 text-sm text-paper/70">No notes contain that word.</li>
+            <li className="px-3 py-6 text-sm text-white/70">No notes contain that word.</li>
           ) : null}
         </ul>
         <div className="border-t border-white/10 px-5 py-4">
-          <p className="truncate text-sm text-paper/75">{email}</p>
+          <p className="truncate text-sm text-white/75">{email}</p>
           <button
             type="button"
             onClick={() => {
               void persist().then(() => onSignOut())
             }}
             disabled={signingOut}
-            className="mt-3 cursor-pointer text-sm font-semibold text-paper transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-wait"
+            className="mt-3 cursor-pointer text-sm font-semibold text-white/90 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-wait"
           >
             {signingOut ? 'Signing out' : 'Sign out'}
           </button>
@@ -713,10 +754,11 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
           </div>
         ) : null}
         <div className="flex items-center justify-between gap-3 px-4 py-3 lg:hidden">
-          <button type="button" onClick={() => setPanel('list')} className="cursor-pointer text-sm font-semibold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+          <button type="button" onClick={() => setPanel('list')} className="cursor-pointer text-sm font-semibold text-[var(--button,#0f172a)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
             Notes
           </button>
-          <button type="button" onClick={() => setPanel('folders')} className="cursor-pointer text-sm font-semibold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+          <ThemeSwitch theme={theme} onToggle={toggleTheme} />
+          <button type="button" onClick={() => setPanel('folders')} className="cursor-pointer text-sm font-semibold text-[var(--button,#0f172a)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
             Folders
           </button>
         </div>
@@ -730,10 +772,10 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
               Paste <span className="font-semibold text-ink">supabase/schema.sql</span> into the SQL editor and run it. If you already ran an older copy, run this one again so folders are added.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href={sqlEditorUrl()} target="_blank" rel="noreferrer" className="cursor-pointer bg-navy px-4 py-3 font-display text-sm font-medium text-white transition-colors duration-200 hover:bg-slate-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2">
+              <a href={sqlEditorUrl()} target="_blank" rel="noreferrer" className="desk-button cursor-pointer px-4 py-3 font-display text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2">
                 Open the SQL editor
               </a>
-              <button type="button" onClick={() => void reload()} className="cursor-pointer border border-line bg-white px-4 py-3 font-display text-sm font-medium transition-colors duration-200 hover:border-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+              <button type="button" onClick={() => void reload()} className="cursor-pointer border border-line bg-[var(--card,#ffffff)] px-4 py-3 font-display text-sm font-medium transition-colors duration-200 hover:border-[var(--button,#0f172a)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                 Try again
               </button>
             </div>
@@ -760,7 +802,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                 />
               </label>
               <p
-                className={`mt-2 rounded-md px-2.5 py-1 text-xs font-semibold ${saveState === 'saving' ? 'bg-[#e0f2fe] text-[#0369A1]' : saveState === 'error' ? 'bg-[#ffe4e6] text-[#9f1239]' : 'bg-[#dcfce7] text-[#166534]'}`}
+                className={`mt-2 rounded-md px-2.5 py-1 text-xs font-semibold ${saveState === 'saving' ? 'tone-info' : saveState === 'error' ? 'tone-danger' : 'tone-ok'}`}
                 aria-live="polite"
               >
                 {saveLabel}
@@ -768,17 +810,17 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
             </div>
 
             {activeFile ? (
-            <div className="overflow-hidden rounded-xl border border-line bg-white shadow-[0_10px_36px_rgba(15,23,42,0.05)]">
+            <div className="overflow-hidden rounded-xl border border-line bg-[var(--card,#ffffff)] shadow-[0_10px_36px_rgba(15,23,42,0.05)]">
               <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
                 <button type="button" onClick={showNoteText} className="cursor-pointer text-sm font-semibold text-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                   Back to the note
                 </button>
                 <p className="truncate font-mono text-sm">{activeFile.name}</p>
-                <button type="button" onClick={() => void removeFile(activeFile)} className="cursor-pointer rounded-md bg-[#ffe4e6] px-2.5 py-1 text-sm font-semibold text-[#9f1239] transition-colors duration-200 hover:bg-[#fecdd3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+                <button type="button" onClick={() => void removeFile(activeFile)} className="tone-danger cursor-pointer rounded-md px-2.5 py-1 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                   Remove
                 </button>
               </div>
-              <NoteEditor value={fileText} onChange={setFileText} filename={activeFile.name} label={`Editing ${activeFile.name}`} height="68vh" />
+              <NoteEditor value={fileText} onChange={setFileText} filename={activeFile.name} label={`Editing ${activeFile.name}`} height="68vh" dark={theme === 'dark'} />
             </div>
               ) : (
             <div>
@@ -786,7 +828,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                 <button
                   type="button"
                   onClick={addPage}
-                  className="cursor-pointer rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-slate-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                  className="desk-button cursor-pointer rounded-md px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
                 >
                   Add note
                 </button>
@@ -796,7 +838,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                     value={stackSearch}
                     onChange={(event) => setStackSearch(event.target.value)}
                     placeholder="Search the notes"
-                    className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink placeholder:text-[#475569] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                    className="w-full rounded-md border border-line bg-[var(--card,#ffffff)] px-3 py-2 text-sm text-ink placeholder:text-slate-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
                   />
                 </label>
                 <p className="text-xs text-slate-ink">
@@ -827,7 +869,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                         if (!event.currentTarget.contains(event.relatedTarget)) setPageDropId((current) => (current === page.id ? null : current))
                       }}
                       onDrop={(event) => dropPage(page.id, event)}
-                      className={`overflow-hidden rounded-xl border bg-white shadow-[0_8px_28px_rgba(15,23,42,0.04)] ${pageDropId === page.id ? 'border-cta' : hit ? 'border-cta' : 'border-line'}`}
+                      className={`overflow-hidden rounded-xl border bg-[var(--card,#ffffff)] shadow-[0_8px_28px_rgba(15,23,42,0.04)] ${pageDropId === page.id ? 'border-cta' : hit ? 'border-cta' : 'border-line'}`}
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-line px-2 py-1">
                         <div
@@ -846,13 +888,13 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                           Note {index + 1}
                         </div>
                         <div className="flex items-center gap-1">
-                          <button type="button" aria-label={`Move note ${index + 1} up`} disabled={index === 0} onClick={() => movePage(page.id, -1)} className="grid size-7 cursor-pointer place-items-center rounded-md bg-[#f1f5f9] text-[#334155] transition-colors duration-200 hover:bg-[#e2e8f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-not-allowed disabled:opacity-40">
+                          <button type="button" aria-label={`Move note ${index + 1} up`} disabled={index === 0} onClick={() => movePage(page.id, -1)} className="tone-neutral grid size-7 cursor-pointer place-items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-not-allowed disabled:opacity-40">
                             <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 10 8 6l4 4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                           </button>
-                          <button type="button" aria-label={`Move note ${index + 1} down`} disabled={index === pages.length - 1} onClick={() => movePage(page.id, 1)} className="grid size-7 cursor-pointer place-items-center rounded-md bg-[#f1f5f9] text-[#334155] transition-colors duration-200 hover:bg-[#e2e8f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-not-allowed disabled:opacity-40">
+                          <button type="button" aria-label={`Move note ${index + 1} down`} disabled={index === pages.length - 1} onClick={() => movePage(page.id, 1)} className="tone-neutral grid size-7 cursor-pointer place-items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta disabled:cursor-not-allowed disabled:opacity-40">
                             <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 6 8 10l4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                           </button>
-                          <button type="button" aria-label={`Remove note ${index + 1}`} onClick={() => removePage(page.id)} className="grid size-7 cursor-pointer place-items-center rounded-md bg-[#ffe4e6] text-[#9f1239] transition-colors duration-200 hover:bg-[#fecdd3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+                          <button type="button" aria-label={`Remove note ${index + 1}`} onClick={() => removePage(page.id)} className="tone-danger grid size-7 cursor-pointer place-items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                             <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" /></svg>
                           </button>
                         </div>
@@ -880,7 +922,7 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
                         <button
                           type="button"
                           onClick={() => void openNote(hit.noteId)}
-                          className="w-full cursor-pointer rounded-lg border border-line bg-white px-3 py-2 text-left transition-colors duration-200 hover:border-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                          className="w-full cursor-pointer rounded-lg border border-line bg-[var(--card,#ffffff)] px-3 py-2 text-left transition-colors duration-200 hover:border-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
                         >
                           <span className="block text-sm font-semibold text-ink">{hit.title}</span>
                           <span className="mt-0.5 block text-xs text-slate-ink">{hit.label}{hit.excerpt ? ` · ${hit.excerpt}` : ''}</span>
@@ -896,17 +938,17 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
             {message ? <p className="mt-4 text-sm text-alert" role="alert">{message}</p> : null}
 
             {confirmDelete ? (
-              <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-4 py-3">
-                <p className="text-sm text-[#9f1239]">Delete this note, its folders, and its files?</p>
+              <div className="danger-panel mt-6 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
+                <p className="text-sm">Delete this note, its folders, and its files?</p>
                 <button type="button" onClick={() => void removeNote()} disabled={working} className="cursor-pointer rounded-md bg-[#9f1239] px-3 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#881337] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy disabled:cursor-wait">
                   Delete
                 </button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className="cursor-pointer rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-ink transition-colors duration-200 hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+                <button type="button" onClick={() => setConfirmDelete(false)} className="cursor-pointer rounded-md bg-[var(--card,#ffffff)] px-3 py-2 text-sm font-semibold text-slate-ink transition-colors duration-200 hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                   Cancel
                 </button>
               </div>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} className="mt-6 cursor-pointer rounded-md bg-[#ffe4e6] px-3 py-2 text-sm font-semibold text-[#9f1239] transition-colors duration-200 hover:bg-[#fecdd3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
+              <button type="button" onClick={() => setConfirmDelete(true)} className="tone-danger mt-6 cursor-pointer rounded-md px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta">
                 Delete note
               </button>
             )}
@@ -914,8 +956,8 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
         ) : null}
       </main>
 
-      <aside className={`${showFolders ? 'block' : 'hidden'} border-l border-line bg-white lg:sticky lg:top-0 lg:z-20 lg:block lg:h-dvh lg:max-h-dvh lg:self-start lg:overflow-hidden`}>
-        <button type="button" onClick={() => setPanel('note')} className="w-full cursor-pointer border-b border-line px-4 py-3 text-left text-sm font-semibold text-navy lg:hidden">
+      <aside className={`${showFolders ? 'block' : 'hidden'} border-l border-line bg-[var(--pane,#ffffff)] lg:sticky lg:top-0 lg:z-20 lg:block lg:h-dvh lg:max-h-dvh lg:self-start lg:overflow-hidden`}>
+        <button type="button" onClick={() => setPanel('note')} className="w-full cursor-pointer border-b border-line px-4 py-3 text-left text-sm font-semibold text-[var(--button,#0f172a)] lg:hidden">
           Back to the note
         </button>
         {selectedId ? (
