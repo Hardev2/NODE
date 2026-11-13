@@ -790,23 +790,50 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
         ) : null}
 
         {!loading && !setupNeeded && selectedId ? (
-          <div className={`w-full px-5 py-5 sm:px-8 sm:py-8 ${selectedId && !activeFile ? 'lg:pr-36' : ''}`}>
-            <div className="mb-3 flex items-start justify-between gap-4">
-              <label className="block min-w-0 flex-1" htmlFor="note-title">
-                <span className="sr-only">Title</span>
-                <input
-                  id="note-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  className="w-full bg-transparent font-display text-3xl font-semibold tracking-tight text-ink outline-none focus-visible:ring-2 focus-visible:ring-cta sm:text-4xl"
-                />
-              </label>
-              <p
-                className={`mt-2 rounded-md px-2.5 py-1 text-xs font-semibold ${saveState === 'saving' ? 'tone-info' : saveState === 'error' ? 'tone-danger' : 'tone-ok'}`}
-                aria-live="polite"
-              >
-                {saveLabel}
-              </p>
+          <div className={`w-full px-5 pb-5 sm:px-8 sm:pb-8 ${selectedId && !activeFile ? 'lg:pr-36' : ''}`}>
+            <div className="sticky top-0 z-30 -mx-5 bg-[var(--canvas,#e8eef3)] px-5 pt-5 sm:-mx-8 sm:px-8 sm:pt-8">
+              <div className="flex items-start justify-between gap-4 pb-3">
+                <label className="block min-w-0 flex-1" htmlFor="note-title">
+                  <span className="sr-only">Title</span>
+                  <input
+                    id="note-title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    className="w-full bg-transparent font-display text-3xl font-semibold tracking-tight text-ink outline-none focus-visible:ring-2 focus-visible:ring-cta sm:text-4xl"
+                  />
+                </label>
+                <p
+                  className={`mt-2 shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold ${saveState === 'saving' ? 'tone-info' : saveState === 'error' ? 'tone-danger' : 'tone-ok'}`}
+                  aria-live="polite"
+                >
+                  {saveLabel}
+                </p>
+              </div>
+              {activeFile ? null : (
+                <div className="flex flex-wrap items-center gap-3 pb-3">
+                  <button
+                    type="button"
+                    onClick={addPage}
+                    className="desk-button cursor-pointer rounded-md px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                  >
+                    Add note
+                  </button>
+                  <label className="min-w-48 flex-1">
+                    <span className="sr-only">Search words in every note</span>
+                    <input
+                      value={stackSearch}
+                      onChange={(event) => setStackSearch(event.target.value)}
+                      placeholder="Search the notes"
+                      className="w-full rounded-md border border-line bg-[var(--card,#ffffff)] px-3 py-2 text-sm text-ink placeholder:text-slate-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+                    />
+                  </label>
+                  <p className="text-xs text-slate-ink">
+                    {stackNeedle
+                      ? `${pages.filter((page) => plainHtml(page.html).toLowerCase().includes(stackNeedle)).length + otherStackHits.length} found`
+                      : pages.length === 1 ? '1 note' : `${pages.length} notes`}
+                  </p>
+                </div>
+              )}
             </div>
 
             {activeFile ? (
@@ -824,29 +851,6 @@ export default function NotesDesk({ userId, email, onSignOut, signingOut }) {
             </div>
               ) : (
             <div>
-              <div className="mb-3 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={addPage}
-                  className="desk-button cursor-pointer rounded-md px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
-                >
-                  Add note
-                </button>
-                <label className="min-w-48 flex-1">
-                  <span className="sr-only">Search words in every note</span>
-                  <input
-                    value={stackSearch}
-                    onChange={(event) => setStackSearch(event.target.value)}
-                    placeholder="Search the notes"
-                    className="w-full rounded-md border border-line bg-[var(--card,#ffffff)] px-3 py-2 text-sm text-ink placeholder:text-slate-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
-                  />
-                </label>
-                <p className="text-xs text-slate-ink">
-                  {stackNeedle
-                    ? `${pages.filter((page) => plainHtml(page.html).toLowerCase().includes(stackNeedle)).length + otherStackHits.length} found`
-                    : pages.length === 1 ? '1 note' : `${pages.length} notes`}
-                </p>
-              </div>
               <StackMap layout="row" pages={pages} activeId={activeMapId ?? pages[0]?.id} stackNeedle={stackNeedle} onJump={jumpToPage} />
               <div className="flex flex-col gap-3">
                 {pages.map((page, index) => {
